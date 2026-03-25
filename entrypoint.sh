@@ -41,6 +41,9 @@ import json
 config = {
     "db_host": "${DB_HOST}",
     "db_port": int("${DB_PORT}"),
+    "db_name": "${DB_NAME}",
+    "db_password": "${DB_PASSWORD}",
+    "db_type": "postgres",
     "redis_cache":    "${REDIS_URL}/0",
     "redis_queue":    "${REDIS_URL}/1",
     "redis_socketio": "${REDIS_URL}/2",

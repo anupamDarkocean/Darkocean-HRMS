@@ -6,6 +6,27 @@ import frappeui from "frappe-ui/vite"
 import path from "path"
 import fs from "fs"
 
+// Plugin to provide fallback for common_site_config.json when building outside bench
+function commonSiteConfigFallback() {
+	const virtualId = "\0virtual:common_site_config"
+	return {
+		name: "common-site-config-fallback",
+		resolveId(id) {
+			if (id.includes("common_site_config.json")) {
+				const resolved = path.resolve(__dirname, "..", "sites", "common_site_config.json")
+				if (!fs.existsSync(resolved)) {
+					return virtualId
+				}
+			}
+		},
+		load(id) {
+			if (id === virtualId) {
+				return `export const socketio_port = 9000`
+			}
+		},
+	}
+}
+
 export default defineConfig({
 	server: {
 		port: 8080,
@@ -13,6 +34,7 @@ export default defineConfig({
 		allowedHosts: true,
 	},
 	plugins: [
+		commonSiteConfigFallback(),
 		vue(),
 		frappeui(),
 		VitePWA({

@@ -1,7 +1,8 @@
+FROM node:18-slim AS node-donor
+
 FROM python:3.10-slim
 
 ARG FRAPPE_BRANCH=version-15
-ARG NODE_VERSION=18
 
 # ---------------------------------------------------------------------------
 # System dependencies
@@ -20,12 +21,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# Node.js + yarn
+# Node.js + yarn  (copied from official node image — avoids deprecated NodeSource)
 # ---------------------------------------------------------------------------
-RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g yarn \
-    && rm -rf /var/lib/apt/lists/*
+COPY --from=node-donor /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-donor /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && npm install -g yarn
 
 # ---------------------------------------------------------------------------
 # Non-root user (bench refuses to run as root)
@@ -46,8 +48,7 @@ RUN git config --global user.email "docker@deploy.local" \
 RUN pip install --user frappe-bench
 
 # ---------------------------------------------------------------------------
-# Initialise bench with Frappe v17
-# --skip-assets: skip frappe's own JS/CSS build (we build hrms assets later)
+# Initialise bench with Frappe v15
 # Layers below are cached until FRAPPE_BRANCH changes.
 # ---------------------------------------------------------------------------
 RUN bench init /home/frappe/frappe-bench \
@@ -58,7 +59,7 @@ RUN bench init /home/frappe/frappe-bench \
 WORKDIR /home/frappe/frappe-bench
 
 # ---------------------------------------------------------------------------
-# Get ERPNext v17 (required by hrms)
+# Get ERPNext v15 (required by hrms)
 # Separate layer — cached independently of our app code.
 # ---------------------------------------------------------------------------
 RUN bench get-app erpnext \

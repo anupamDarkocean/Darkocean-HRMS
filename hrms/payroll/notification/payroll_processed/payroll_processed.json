@@ -1,0 +1,9 @@
+{
+  "doctype": "Notification",
+  "name": "Payslip Ready",
+  "subject": "Your Payslip is Ready \u2014 {{ doc.start_date }}",
+  "document_type": "Salary Slip",
+  "event": "On Submit",
+  "channel": "Email",
+  "message": "Dear {{ doc.employee_name }},<br><br>Your salary slip for <strong>{{ doc.start_date }}</strong> to <strong>{{ doc.end_date }}</strong> has been processed.<br><br>Net Pay: <strong>QAR {{ doc.net_pay }}</strong><br><br>Please login to Darkocean HRMS to view your full payslip.<br><br>Regards,<br>Darkocean HR Team<br><em>Powering the People Behind the Ocean</em>"
+}

@@ -1,0 +1,25 @@
+{
+  "doctype": "Workspace",
+  "name": "Darkocean HR",
+  "label": "Darkocean HR",
+  "title": "Darkocean HR",
+  "module": "HR",
+  "icon": "anchor",
+  "indicator_color": "#00C6FF",
+  "public": 1,
+  "shortcuts": [
+    {"type": "DocType", "label": "Employee", "link_to": "Employee", "icon": "users"},
+    {"type": "DocType", "label": "Leave Application", "link_to": "Leave Application", "icon": "calendar"},
+    {"type": "DocType", "label": "Salary Slip", "link_to": "Salary Slip", "icon": "credit-card"},
+    {"type": "DocType", "label": "Expense Claim", "link_to": "Expense Claim", "icon": "file-text"},
+    {"type": "DocType", "label": "Attendance", "link_to": "Attendance", "icon": "clock"},
+    {"type": "DocType", "label": "Appraisal", "link_to": "Appraisal", "icon": "star"},
+    {"type": "DocType", "label": "Job Opening", "link_to": "Job Opening", "icon": "briefcase"},
+    {"type": "DocType", "label": "Vessel", "link_to": "Vessel", "icon": "anchor"},
+    {"type": "Report", "label": "WPS Payroll Export", "link_to": "WPS Payroll Export"},
+    {"type": "Report", "label": "Visa & Passport Tracker", "link_to": "Visa & Passport Expiry Tracker"},
+    {"type": "Report", "label": "Offshore Crew Status", "link_to": "Offshore Crew Status"},
+    {"type": "Report", "label": "EOSB Liability", "link_to": "EOSB Liability Report"},
+    {"type": "Report", "label": "Project Headcount", "link_to": "Project Headcount"}
+  ]
+}

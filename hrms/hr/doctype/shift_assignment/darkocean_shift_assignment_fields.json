@@ -1,0 +1,5 @@
+[
+  {"doctype": "Custom Field", "dt": "Shift Assignment", "fieldname": "custom_vessel_assignment", "label": "Vessel", "fieldtype": "Link", "options": "Vessel", "insert_after": "company"},
+  {"doctype": "Custom Field", "dt": "Shift Assignment", "fieldname": "custom_project_assignment", "label": "Project", "fieldtype": "Link", "options": "Project", "insert_after": "custom_vessel_assignment"},
+  {"doctype": "Custom Field", "dt": "Shift Assignment", "fieldname": "custom_rotation_type", "label": "Rotation Type", "fieldtype": "Select", "options": "\nOffice Standard\nOffshore 28/14\nVessel 12h/12h", "insert_after": "custom_project_assignment"}
+]

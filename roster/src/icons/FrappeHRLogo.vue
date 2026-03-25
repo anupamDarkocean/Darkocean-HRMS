@@ -1,11 +1,15 @@
 <template>
+	<!-- Darkocean HRMS -->
 	<svg
 		xmlns="http://www.w3.org/2000/svg"
 		width="117"
 		height="117"
 		viewBox="0 0 117 117"
 		fill="none"
+		aria-label="Darkocean HRMS"
+		role="img"
 	>
+		<title>Darkocean HRMS</title>
 		<g clip-path="url(#clip0_0_45)">
 			<path
 				d="M93.4394 0H23.5606C10.5485 0 0 10.5485 0 23.5606V93.4394C0 106.452 10.5485 117 23.5606 117H93.4394C106.452 117 117 106.452 117 93.4394V23.5606C117 10.5485 106.452 0 93.4394 0Z"

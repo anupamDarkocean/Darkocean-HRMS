@@ -1,0 +1,9 @@
+{
+  "doctype": "Notification",
+  "name": "Expense Claim Status Update",
+  "subject": "Expense Claim {{ doc.name }} \u2014 {{ doc.workflow_state }}",
+  "document_type": "Expense Claim",
+  "event": "Change",
+  "channel": "Email",
+  "message": "Dear {{ doc.employee_name }},<br><br>Your expense claim <strong>{{ doc.name }}</strong> (Total: QAR {{ doc.total_claimed_amount }}) has been updated to: <strong>{{ doc.workflow_state }}</strong>.<br><br>Please login to Darkocean HRMS for details.<br><br>Regards,<br>Darkocean HR Team"
+}

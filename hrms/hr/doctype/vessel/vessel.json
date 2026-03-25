@@ -1,0 +1,14 @@
+{
+  "doctype": "DocType",
+  "name": "Vessel",
+  "module": "HR",
+  "autoname": "field:vessel_name",
+  "fields": [
+    {"fieldname": "vessel_name", "fieldtype": "Data", "label": "Vessel Name", "reqd": 1, "in_list_view": 1},
+    {"fieldname": "vessel_type", "fieldtype": "Select", "label": "Vessel Type", "options": "\nSurvey Vessel\nOffshore Support\nResearch Vessel\nCharter", "in_list_view": 1},
+    {"fieldname": "imo_number", "fieldtype": "Data", "label": "IMO Number"},
+    {"fieldname": "current_project", "fieldtype": "Link", "label": "Current Project", "options": "Project"},
+    {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nDocked\nDecommissioned", "default": "Active", "in_list_view": 1}
+  ],
+  "permissions": [{"role": "HR User", "read": 1, "write": 1, "create": 1}]
+}

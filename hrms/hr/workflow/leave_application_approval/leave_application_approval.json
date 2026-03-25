@@ -1,0 +1,21 @@
+{
+  "doctype": "Workflow",
+  "name": "Leave Application Approval - Darkocean",
+  "document_type": "Leave Application",
+  "is_active": 1,
+  "workflow_name": "Leave Application Approval - Darkocean",
+  "states": [
+    {"state": "Open", "doc_status": "0", "allow_edit": "Employee"},
+    {"state": "Pending Approval", "doc_status": "0", "allow_edit": "Leave Approver"},
+    {"state": "HR Review", "doc_status": "0", "allow_edit": "HR Manager"},
+    {"state": "Approved", "doc_status": "1", "allow_edit": "Leave Approver"},
+    {"state": "Rejected", "doc_status": "2", "allow_edit": "Leave Approver"}
+  ],
+  "transitions": [
+    {"state": "Open", "action": "Apply", "next_state": "Pending Approval", "allowed": "Employee"},
+    {"state": "Pending Approval", "action": "Approve", "next_state": "HR Review", "allowed": "Leave Approver"},
+    {"state": "Pending Approval", "action": "Reject", "next_state": "Rejected", "allowed": "Leave Approver"},
+    {"state": "HR Review", "action": "Final Approve", "next_state": "Approved", "allowed": "HR Manager"},
+    {"state": "HR Review", "action": "Reject", "next_state": "Rejected", "allowed": "HR Manager"}
+  ]
+}

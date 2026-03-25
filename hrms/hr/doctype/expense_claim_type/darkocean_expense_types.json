@@ -1,0 +1,12 @@
+[
+  {"doctype": "Expense Claim Type", "name": "Field & Offshore Operations", "expense_type": "Field & Offshore Operations"},
+  {"doctype": "Expense Claim Type", "name": "Equipment & Consumables", "expense_type": "Equipment & Consumables"},
+  {"doctype": "Expense Claim Type", "name": "Flights & Air Travel", "expense_type": "Flights & Air Travel"},
+  {"doctype": "Expense Claim Type", "name": "Hotel & Accommodation", "expense_type": "Hotel & Accommodation"},
+  {"doctype": "Expense Claim Type", "name": "Per Diem & Subsistence", "expense_type": "Per Diem & Subsistence"},
+  {"doctype": "Expense Claim Type", "name": "Visa & Government Fees", "expense_type": "Visa & Government Fees"},
+  {"doctype": "Expense Claim Type", "name": "Client Entertainment", "expense_type": "Client Entertainment"},
+  {"doctype": "Expense Claim Type", "name": "Training & Certification", "expense_type": "Training & Certification"},
+  {"doctype": "Expense Claim Type", "name": "Marine Charter Costs", "expense_type": "Marine Charter Costs"},
+  {"doctype": "Expense Claim Type", "name": "Transport & Taxi", "expense_type": "Transport & Taxi"}
+]

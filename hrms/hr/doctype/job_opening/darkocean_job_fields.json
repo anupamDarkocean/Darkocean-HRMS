@@ -1,0 +1,6 @@
+[
+  {"doctype": "Custom Field", "dt": "Job Opening", "fieldname": "custom_darkocean_job_category", "label": "Darkocean Job Category", "fieldtype": "Select", "options": "\nMarine Surveyor\nHydrographic Engineer\nGeotechnical Engineer\nSoftware Engineer\nOperations Manager\nBusiness Development Manager\nFinance Officer\nDrone Operator\nVessel Master\nHR Officer\nIT Specialist\nProject Manager", "insert_after": "job_title"},
+  {"doctype": "Custom Field", "dt": "Job Opening", "fieldname": "custom_required_clearance", "label": "Required Clearance", "fieldtype": "Select", "options": "\nNone\nQatar Security Clearance\nOffshore Medical Certificate\nDiving Certification\nBOSIET Certificate", "insert_after": "designation"},
+  {"doctype": "Custom Field", "dt": "Job Opening", "fieldname": "custom_project_based_hire", "label": "Project-Based Hire", "fieldtype": "Check", "insert_after": "custom_required_clearance"},
+  {"doctype": "Custom Field", "dt": "Job Opening", "fieldname": "custom_target_project", "label": "Target Project", "fieldtype": "Link", "options": "Project", "insert_after": "custom_project_based_hire", "depends_on": "eval:doc.custom_project_based_hire == 1"}
+]

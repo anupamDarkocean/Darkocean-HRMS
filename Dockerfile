@@ -1,48 +1,90 @@
 FROM python:3.10-slim
 
-WORKDIR /app
+ARG FRAPPE_BRANCH=version-17
+ARG NODE_VERSION=18
 
-# Install system dependencies required for Frappe
-RUN apt-get update && apt-get install -y \
+# ---------------------------------------------------------------------------
+# System dependencies
+# ---------------------------------------------------------------------------
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
     curl \
-    wget \
-    nodejs \
-    npm \
     libssl-dev \
     libjpeg-dev \
     zlib1g-dev \
+    libffi-dev \
+    libmariadb-dev \
+    mariadb-client \
     postgresql-client \
+    redis-tools \
+    wkhtmltopdf \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node globally
-RUN npm install -g yarn n && n 18
+# ---------------------------------------------------------------------------
+# Node.js + yarn
+# ---------------------------------------------------------------------------
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && npm install -g yarn \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY . .
+# ---------------------------------------------------------------------------
+# Non-root user (bench refuses to run as root)
+# ---------------------------------------------------------------------------
+RUN useradd -ms /bin/bash frappe
+USER frappe
+WORKDIR /home/frappe
 
-# Install Python dependencies with flit
-RUN pip install --no-cache-dir "flit_core>=3.4,<4"
+ENV PATH="/home/frappe/.local/bin:$PATH"
 
-# Install hrms package
-RUN pip install --no-cache-dir -e .
+# ---------------------------------------------------------------------------
+# Install bench CLI
+# ---------------------------------------------------------------------------
+RUN pip install --user frappe-bench
 
-# Install frontend dependencies
-RUN yarn install --frozen-lockfile
+# ---------------------------------------------------------------------------
+# Initialise bench with Frappe v17
+# Layers below are cached until FRAPPE_BRANCH changes.
+# ---------------------------------------------------------------------------
+RUN bench init /home/frappe/frappe-bench \
+    --frappe-branch ${FRAPPE_BRANCH} \
+    --skip-redis-config-generation \
+    --no-procfile \
+    --verbose
 
-# Build frontend applications
-RUN yarn build
+WORKDIR /home/frappe/frappe-bench
 
-# Create bench directory structure
-RUN mkdir -p /workspace/apps /workspace/sites
+# ---------------------------------------------------------------------------
+# Get ERPNext v17 (required by hrms)
+# Separate layer — cached independently of our app code.
+# ---------------------------------------------------------------------------
+RUN bench get-app erpnext \
+    --branch ${FRAPPE_BRANCH} \
+    --skip-assets
 
-# Expose port
+# ---------------------------------------------------------------------------
+# Copy entrypoint before the app so it has its own cached layer
+# ---------------------------------------------------------------------------
+COPY --chown=frappe:frappe entrypoint.sh /home/frappe/entrypoint.sh
+RUN chmod +x /home/frappe/entrypoint.sh
+
+# ---------------------------------------------------------------------------
+# Copy hrms app source (cache busted on every code change)
+# ---------------------------------------------------------------------------
+COPY --chown=frappe:frappe . apps/hrms/
+
+# Install hrms Python package into the bench virtualenv
+RUN ./env/bin/pip install --no-cache-dir -e apps/hrms/
+
+# Build frontend (Vite + roster)
+RUN cd apps/hrms && yarn install --frozen-lockfile && yarn build
+
+# ---------------------------------------------------------------------------
+# Runtime
+# ---------------------------------------------------------------------------
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/api/health || exit 1
-
-# Start server
-CMD ["bench", "serve", "--port", "8000", "--host", "0.0.0.0"]
+# Mount /home/frappe/frappe-bench/sites as a Railway persistent volume
+# to preserve site data across deploys.
+CMD ["/home/frappe/entrypoint.sh"]

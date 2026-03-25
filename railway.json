@@ -4,7 +4,6 @@
     "builder": "dockerfile"
   },
   "deploy": {
-    "startCommand": "bench serve --port $PORT",
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 5
   }

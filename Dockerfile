@@ -53,7 +53,6 @@ RUN pip install --user frappe-bench
 RUN bench init /home/frappe/frappe-bench \
     --frappe-branch ${FRAPPE_BRANCH} \
     --skip-redis-config-generation \
-    --skip-assets \
     --verbose
 
 WORKDIR /home/frappe/frappe-bench

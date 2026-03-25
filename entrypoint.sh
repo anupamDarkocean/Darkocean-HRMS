@@ -83,7 +83,28 @@ done
 # to persist data across deploys. Without a volume every restart re-creates
 # the site and data is lost.
 # ---------------------------------------------------------------------------
-if [ ! -f "sites/${SITE_NAME}/site_config.json" ]; then
+if [ -f "sites/${SITE_NAME}/site_config.json" ]; then
+    # Site exists from a prior deploy — refresh DB credentials in case
+    # Railway rotated them or the Postgres service was recreated.
+    echo "==> Updating site DB credentials from environment..."
+    python3 - <<PYEOF
+import json, os
+
+site_config_path = "sites/${SITE_NAME}/site_config.json"
+with open(site_config_path) as f:
+    cfg = json.load(f)
+
+cfg["db_host"] = "${DB_HOST}"
+cfg["db_port"] = int("${DB_PORT}")
+cfg["db_name"] = "${DB_NAME}"
+cfg["db_password"] = "${DB_PASSWORD}"
+cfg["db_type"] = "postgres"
+
+with open(site_config_path, "w") as f:
+    json.dump(cfg, f, indent=2)
+print("site_config.json updated with current credentials")
+PYEOF
+else
     echo "==> Creating site: ${SITE_NAME}"
     bench new-site "${SITE_NAME}" \
         --db-type postgres \

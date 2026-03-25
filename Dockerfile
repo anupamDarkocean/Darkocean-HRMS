@@ -36,6 +36,10 @@ WORKDIR /home/frappe
 
 ENV PATH="/home/frappe/.local/bin:$PATH"
 
+# git needs an identity for internal operations during bench init
+RUN git config --global user.email "docker@deploy.local" \
+    && git config --global user.name "Docker Build"
+
 # ---------------------------------------------------------------------------
 # Install bench CLI
 # ---------------------------------------------------------------------------
@@ -43,12 +47,13 @@ RUN pip install --user frappe-bench
 
 # ---------------------------------------------------------------------------
 # Initialise bench with Frappe v17
+# --skip-assets: skip frappe's own JS/CSS build (we build hrms assets later)
 # Layers below are cached until FRAPPE_BRANCH changes.
 # ---------------------------------------------------------------------------
 RUN bench init /home/frappe/frappe-bench \
     --frappe-branch ${FRAPPE_BRANCH} \
     --skip-redis-config-generation \
-    --no-procfile \
+    --skip-assets \
     --verbose
 
 WORKDIR /home/frappe/frappe-bench

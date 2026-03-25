@@ -24,7 +24,10 @@ fi
 DB_HOST="${PGHOST:-localhost}"
 DB_PORT="${PGPORT:-5432}"
 DB_NAME="${PGDATABASE:-hrms}"
+DB_USER="${PGUSER:-postgres}"
 DB_PASSWORD="${PGPASSWORD}"
+
+echo "==> DB connection: host=${DB_HOST} port=${DB_PORT} db=${DB_NAME} user=${DB_USER}"
 
 # ---------------------------------------------------------------------------
 # Resolve Redis URL
@@ -42,6 +45,7 @@ config = {
     "db_host": "${DB_HOST}",
     "db_port": int("${DB_PORT}"),
     "db_name": "${DB_NAME}",
+    "db_user": "${DB_USER}",
     "db_password": "${DB_PASSWORD}",
     "db_type": "postgres",
     "redis_cache":    "${REDIS_URL}/0",
@@ -97,6 +101,7 @@ with open(site_config_path) as f:
 cfg["db_host"] = "${DB_HOST}"
 cfg["db_port"] = int("${DB_PORT}")
 cfg["db_name"] = "${DB_NAME}"
+cfg["db_user"] = "${DB_USER}"
 cfg["db_password"] = "${DB_PASSWORD}"
 cfg["db_type"] = "postgres"
 

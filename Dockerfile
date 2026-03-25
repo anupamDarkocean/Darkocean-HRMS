@@ -23,7 +23,7 @@ RUN npm install -g yarn n && n 18
 COPY . .
 
 # Install Python dependencies with flit
-RUN pip install --no-cache-dir flit_core>=3.4,<4
+RUN pip install --no-cache-dir "flit_core>=3.4,<4"
 
 # Install hrms package
 RUN pip install --no-cache-dir -e .

@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-ARG FRAPPE_BRANCH=version-17
+ARG FRAPPE_BRANCH=version-15
 ARG NODE_VERSION=18
 
 # ---------------------------------------------------------------------------

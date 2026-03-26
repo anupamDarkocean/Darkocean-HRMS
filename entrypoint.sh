@@ -14,11 +14,17 @@ echo "==> Starting Darkocean HRMS (site: $SITE_NAME)"
 # plugin. Fall back to parsing DATABASE_URL if the individual vars are absent.
 # ---------------------------------------------------------------------------
 if [ -z "$PGHOST" ] && [ -n "$DATABASE_URL" ]; then
-    export PGHOST=$(python3 -c "from urllib.parse import urlparse; u=urlparse('$DATABASE_URL'); print(u.hostname)")
-    export PGPORT=$(python3 -c "from urllib.parse import urlparse; u=urlparse('$DATABASE_URL'); print(u.port or 5432)")
-    export PGDATABASE=$(python3 -c "from urllib.parse import urlparse; u=urlparse('$DATABASE_URL'); print(u.path.lstrip('/'))")
-    export PGUSER=$(python3 -c "from urllib.parse import urlparse; u=urlparse('$DATABASE_URL'); print(u.username)")
-    export PGPASSWORD=$(python3 -c "from urllib.parse import urlparse; u=urlparse('$DATABASE_URL'); print(u.password)")
+    # Use Python with proper quoting to avoid shell mangling special chars
+    eval "$(python3 -c "
+from urllib.parse import urlparse, unquote
+import shlex, os
+u = urlparse(os.environ['DATABASE_URL'])
+print(f'export PGHOST={shlex.quote(u.hostname or \"localhost\")}')
+print(f'export PGPORT={shlex.quote(str(u.port or 5432))}')
+print(f'export PGDATABASE={shlex.quote(u.path.lstrip(\"/\"))}')
+print(f'export PGUSER={shlex.quote(unquote(u.username or \"postgres\"))}')
+print(f'export PGPASSWORD={shlex.quote(unquote(u.password or \"\"))}')
+")"
 fi
 
 DB_HOST="${PGHOST:-localhost}"
@@ -36,28 +42,29 @@ echo "==> DB connection: host=${DB_HOST} port=${DB_PORT} db=${DB_NAME} user=${DB
 REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
 
 # ---------------------------------------------------------------------------
-# Write sites/common_site_config.json so bench can find Redis and the DB host
+# Write sites/common_site_config.json
+# Uses os.environ to avoid shell interpolation mangling passwords.
 # ---------------------------------------------------------------------------
-python3 - <<EOF
-import json
+python3 -c "
+import json, os
 
 config = {
-    "db_host": "${DB_HOST}",
-    "db_port": int("${DB_PORT}"),
-    "db_name": "${DB_NAME}",
-    "db_user": "${DB_USER}",
-    "db_password": "${DB_PASSWORD}",
-    "db_type": "postgres",
-    "redis_cache":    "${REDIS_URL}/0",
-    "redis_queue":    "${REDIS_URL}/1",
-    "redis_socketio": "${REDIS_URL}/2",
-    "socketio_port":  9000,
-    "webserver_port": int("${PORT:-8000}"),
+    'db_host':        os.environ.get('PGHOST', 'localhost'),
+    'db_port':        int(os.environ.get('PGPORT', '5432')),
+    'db_name':        os.environ.get('PGDATABASE', 'hrms'),
+    'db_user':        os.environ.get('PGUSER', 'postgres'),
+    'db_password':    os.environ.get('PGPASSWORD', ''),
+    'db_type':        'postgres',
+    'redis_cache':    os.environ.get('REDIS_URL', 'redis://localhost:6379') + '/0',
+    'redis_queue':    os.environ.get('REDIS_URL', 'redis://localhost:6379') + '/1',
+    'redis_socketio': os.environ.get('REDIS_URL', 'redis://localhost:6379') + '/2',
+    'socketio_port':  9000,
+    'webserver_port': int(os.environ.get('PORT', '8000')),
 }
-with open("sites/common_site_config.json", "w") as f:
+with open('sites/common_site_config.json', 'w') as f:
     json.dump(config, f, indent=2)
-print("common_site_config.json written")
-EOF
+print('common_site_config.json written')
+"
 
 # ---------------------------------------------------------------------------
 # Wait for PostgreSQL
@@ -82,33 +89,53 @@ except Exception:
 done
 
 # ---------------------------------------------------------------------------
-# First-run site initialisation
-# NOTE: Railway volumes should be mounted at /home/frappe/frappe-bench/sites
-# to persist data across deploys. Without a volume every restart re-creates
-# the site and data is lost.
+# Wait for Redis
+# ---------------------------------------------------------------------------
+echo "==> Waiting for Redis..."
+for i in $(seq 1 15); do
+    if python3 -c "
+import socket, sys, os
+from urllib.parse import urlparse
+u = urlparse(os.environ.get('REDIS_URL', 'redis://localhost:6379'))
+try:
+    s = socket.create_connection((u.hostname, u.port or 6379), timeout=3)
+    s.close()
+    sys.exit(0)
+except Exception:
+    sys.exit(1)
+" 2>/dev/null; then
+        echo "    Redis is ready"
+        break
+    fi
+    [ "$i" -eq 15 ] && echo "WARNING: Redis not reachable — continuing anyway"
+    echo "    Attempt $i/15 — retrying in 2s..."
+    sleep 2
+done
+
+# ---------------------------------------------------------------------------
+# First-run site initialisation / credential refresh
 # ---------------------------------------------------------------------------
 if [ -f "sites/${SITE_NAME}/site_config.json" ]; then
-    # Site exists from a prior deploy — refresh DB credentials in case
-    # Railway rotated them or the Postgres service was recreated.
+    # Site exists — refresh credentials from env (handles Railway rotation)
     echo "==> Updating site DB credentials from environment..."
-    python3 - <<PYEOF
+    python3 -c "
 import json, os
 
-site_config_path = "sites/${SITE_NAME}/site_config.json"
-with open(site_config_path) as f:
+path = 'sites/${SITE_NAME}/site_config.json'
+with open(path) as f:
     cfg = json.load(f)
 
-cfg["db_host"] = "${DB_HOST}"
-cfg["db_port"] = int("${DB_PORT}")
-cfg["db_name"] = "${DB_NAME}"
-cfg["db_user"] = "${DB_USER}"
-cfg["db_password"] = "${DB_PASSWORD}"
-cfg["db_type"] = "postgres"
+cfg['db_host']     = os.environ.get('PGHOST', 'localhost')
+cfg['db_port']     = int(os.environ.get('PGPORT', '5432'))
+cfg['db_name']     = os.environ.get('PGDATABASE', 'hrms')
+cfg['db_user']     = os.environ.get('PGUSER', 'postgres')
+cfg['db_password'] = os.environ.get('PGPASSWORD', '')
+cfg['db_type']     = 'postgres'
 
-with open(site_config_path, "w") as f:
+with open(path, 'w') as f:
     json.dump(cfg, f, indent=2)
-print("site_config.json updated with current credentials")
-PYEOF
+print('site_config.json updated with current credentials')
+"
 else
     echo "==> Creating site: ${SITE_NAME}"
     bench new-site "${SITE_NAME}" \
@@ -116,6 +143,7 @@ else
         --db-host "${DB_HOST}" \
         --db-port "${DB_PORT}" \
         --db-name "${DB_NAME}" \
+        --db-user "${DB_USER}" \
         --db-password "${DB_PASSWORD}" \
         --admin-password "${ADMIN_PASSWORD:-admin}" \
         --set-default

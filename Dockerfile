@@ -2,7 +2,7 @@ FROM node:18-slim AS node-donor
 
 FROM python:3.10-slim
 
-ARG FRAPPE_BRANCH=version-15
+ARG FRAPPE_BRANCH=version-17
 
 # ---------------------------------------------------------------------------
 # System dependencies
@@ -49,7 +49,7 @@ RUN git config --global user.email "docker@deploy.local" \
 RUN pip install --user frappe-bench
 
 # ---------------------------------------------------------------------------
-# Initialise bench with Frappe v15
+# Initialise bench with Frappe v17
 # Layers below are cached until FRAPPE_BRANCH changes.
 # ---------------------------------------------------------------------------
 RUN bench init /home/frappe/frappe-bench \
@@ -61,7 +61,7 @@ RUN bench init /home/frappe/frappe-bench \
 WORKDIR /home/frappe/frappe-bench
 
 # ---------------------------------------------------------------------------
-# Get ERPNext v15 (required by hrms)
+# Get ERPNext v17 (required by hrms)
 # Separate layer — cached independently of our app code.
 # ---------------------------------------------------------------------------
 RUN bench get-app erpnext \

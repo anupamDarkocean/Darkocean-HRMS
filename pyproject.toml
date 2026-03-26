@@ -70,5 +70,5 @@ Documentation = "https://darkocean.ai/hrms/docs"
 
 
 [tool.bench.frappe-dependencies]
-frappe = ">=17.0.0-dev,<18.0.0"
-erpnext = ">=17.0.0-dev,<18.0.0"
+frappe = ">=16.0.0,<17.0.0"
+erpnext = ">=16.0.0,<17.0.0"

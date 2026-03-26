@@ -1,8 +1,8 @@
 FROM node:20-slim AS node-donor
 
-FROM python:3.14-rc-slim
+FROM python:3.13-slim
 
-ARG FRAPPE_BRANCH=develop
+ARG FRAPPE_BRANCH=version-16
 
 # ---------------------------------------------------------------------------
 # System deps (only what bench init + psycopg2 + Pillow need to compile)

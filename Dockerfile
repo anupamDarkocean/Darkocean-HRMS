@@ -1,8 +1,8 @@
-FROM node:20-slim AS node-donor
+FROM node:24-slim AS node-donor
 
-FROM python:3.13-slim
+FROM python:3.14-slim
 
-ARG FRAPPE_BRANCH=version-15
+ARG FRAPPE_BRANCH=version-16
 
 # ---------------------------------------------------------------------------
 # System deps: MariaDB, Redis, build tools, supervisord

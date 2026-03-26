@@ -10,11 +10,10 @@ echo "==> Starting Darkocean HRMS (site: $SITE_NAME)"
 
 # ---------------------------------------------------------------------------
 # Resolve database connection
-# Railway sets PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD for its Postgres
-# plugin. Fall back to parsing DATABASE_URL if the individual vars are absent.
+# Railway's Postgres plugin injects PGHOST/PGPORT/PGDATABASE/PGUSER/PGPASSWORD.
+# Fall back to DB_HOST/DB_NAME/etc. (manual vars), then to parsing DATABASE_URL.
 # ---------------------------------------------------------------------------
 if [ -z "$PGHOST" ] && [ -n "$DATABASE_URL" ]; then
-    # Use Python with proper quoting to avoid shell mangling special chars
     eval "$(python3 -c "
 from urllib.parse import urlparse, unquote
 import shlex, os
@@ -27,19 +26,28 @@ print(f'export PGPASSWORD={shlex.quote(unquote(u.password or \"\"))}')
 ")"
 fi
 
-DB_HOST="${PGHOST:-localhost}"
-DB_PORT="${PGPORT:-5432}"
-DB_NAME="${PGDATABASE:-hrms}"
-DB_USER="${PGUSER:-postgres}"
-DB_PASSWORD="${PGPASSWORD}"
+# Support both Railway plugin vars (PG*) and manual vars (DB_*)
+export PGHOST="${PGHOST:-${DB_HOST:-localhost}}"
+export PGPORT="${PGPORT:-${DB_PORT:-5432}}"
+export PGDATABASE="${PGDATABASE:-${DB_NAME:-hrms}}"
+export PGUSER="${PGUSER:-${DB_USER:-postgres}}"
+export PGPASSWORD="${PGPASSWORD:-${DB_PASSWORD}}"
+
+DB_HOST="$PGHOST"
+DB_PORT="$PGPORT"
+DB_NAME="$PGDATABASE"
+DB_USER="$PGUSER"
+DB_PASSWORD="$PGPASSWORD"
 
 echo "==> DB connection: host=${DB_HOST} port=${DB_PORT} db=${DB_NAME} user=${DB_USER}"
 
 # ---------------------------------------------------------------------------
 # Resolve Redis URL
-# Railway sets REDIS_URL for its Redis plugin.
+# Railway's Redis plugin injects REDIS_URL on the internal network.
 # ---------------------------------------------------------------------------
 REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+
+echo "==> Redis URL: ${REDIS_URL}"
 
 # ---------------------------------------------------------------------------
 # Write sites/common_site_config.json
@@ -89,9 +97,9 @@ except Exception:
 done
 
 # ---------------------------------------------------------------------------
-# Wait for Redis
+# Wait for Redis (required — bench migrate needs cache)
 # ---------------------------------------------------------------------------
-echo "==> Waiting for Redis..."
+echo "==> Waiting for Redis at ${REDIS_URL}..."
 for i in $(seq 1 15); do
     if python3 -c "
 import socket, sys, os
@@ -107,7 +115,7 @@ except Exception:
         echo "    Redis is ready"
         break
     fi
-    [ "$i" -eq 15 ] && echo "WARNING: Redis not reachable — continuing anyway"
+    [ "$i" -eq 15 ] && echo "ERROR: Redis not reachable after 15 attempts — aborting (bench migrate requires Redis)" && exit 1
     echo "    Attempt $i/15 — retrying in 2s..."
     sleep 2
 done

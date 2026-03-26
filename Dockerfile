@@ -5,45 +5,27 @@ FROM python:3.11-slim
 ARG FRAPPE_BRANCH=develop
 
 # ---------------------------------------------------------------------------
-# System dependencies
-# bench init compiles C extensions (psycopg2, Pillow, cryptography, etc.)
-# that need headers + pkg-config to locate them.
+# System deps (only what bench init + psycopg2 + Pillow need to compile)
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # --- build toolchain ---
     build-essential \
     pkg-config \
     python3-dev \
-    # --- core tools ---
     git \
     curl \
-    cron \
-    # --- crypto / SSL ---
     libssl-dev \
     libffi-dev \
-    # --- PostgreSQL (psycopg2) ---
     libpq-dev \
     postgresql-client \
-    # --- Pillow image deps ---
     libjpeg-dev \
     zlib1g-dev \
     libfreetype6-dev \
     libwebp-dev \
-    libtiff-dev \
-    libopenjp2-7-dev \
-    liblcms2-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    # --- Redis CLI (healthchecks) ---
-    redis-tools \
-    # --- PDF generation (wkhtmltopdf) ---
     wkhtmltopdf \
-    xfonts-75dpi \
-    xfonts-base \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
-# Node.js + yarn  (copied from official node image — avoids deprecated NodeSource)
+# Node.js + yarn (from official node image)
 # ---------------------------------------------------------------------------
 COPY --from=node-donor /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-donor /usr/local/lib/node_modules /usr/local/lib/node_modules
@@ -60,19 +42,14 @@ WORKDIR /home/frappe
 
 ENV PATH="/home/frappe/.local/bin:$PATH"
 
-# git needs an identity for internal operations during bench init
 RUN git config --global user.email "docker@deploy.local" \
     && git config --global user.name "Docker Build"
 
 # ---------------------------------------------------------------------------
-# Install bench CLI
+# Bench + Frappe + ERPNext + HRMS — all built at image time
 # ---------------------------------------------------------------------------
 RUN pip install --user frappe-bench
 
-# ---------------------------------------------------------------------------
-# Initialise bench with Frappe (develop = v17-dev)
-# Layers below are cached until FRAPPE_BRANCH changes.
-# ---------------------------------------------------------------------------
 RUN bench init /home/frappe/frappe-bench \
     --frappe-branch ${FRAPPE_BRANCH} \
     --skip-redis-config-generation \
@@ -81,36 +58,13 @@ RUN bench init /home/frappe/frappe-bench \
 
 WORKDIR /home/frappe/frappe-bench
 
-# ---------------------------------------------------------------------------
-# Get ERPNext (develop = v17-dev, required by hrms)
-# Separate layer — cached independently of our app code.
-# ---------------------------------------------------------------------------
-RUN bench get-app erpnext \
-    --branch ${FRAPPE_BRANCH} \
-    --skip-assets
+RUN bench get-app erpnext --branch ${FRAPPE_BRANCH} --skip-assets
 
-# ---------------------------------------------------------------------------
-# Copy entrypoint before the app so it has its own cached layer
-# ---------------------------------------------------------------------------
 COPY --chown=frappe:frappe entrypoint.sh /home/frappe/entrypoint.sh
 RUN chmod +x /home/frappe/entrypoint.sh
 
-# ---------------------------------------------------------------------------
-# Copy hrms app source (cache busted on every code change)
-# ---------------------------------------------------------------------------
 COPY --chown=frappe:frappe . apps/hrms/
-
-# Install hrms Python package into the bench virtualenv
 RUN ./env/bin/pip install --no-cache-dir -e apps/hrms/
 
-# Build frontend (Vite + roster)
-RUN cd apps/hrms && yarn install --frozen-lockfile && yarn build
-
-# ---------------------------------------------------------------------------
-# Runtime
-# ---------------------------------------------------------------------------
 EXPOSE 8000
-
-# Mount /home/frappe/frappe-bench/sites as a Railway persistent volume
-# to preserve site data across deploys.
 CMD ["/home/frappe/entrypoint.sh"]

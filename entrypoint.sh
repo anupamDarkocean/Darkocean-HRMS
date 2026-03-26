@@ -7,11 +7,13 @@ SITE_NAME="${FRAPPE_SITE_NAME:-site1.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-}"
 PORT="${PORT:-8000}"
-DB_INIT_FLAG="/data/.db_initialized"
 
+# ---------------------------------------------------------------------------
+# 1. Wait for MariaDB (auth-free check)
+# ---------------------------------------------------------------------------
 echo "==> Waiting for MariaDB..."
 for i in $(seq 1 45); do
-    if mariadb -u root --socket=/run/mysqld/mysqld.sock -e "SELECT 1" &>/dev/null; then
+    if mysqladmin ping -h 127.0.0.1 --silent 2>/dev/null; then
         echo "    MariaDB ready"
         break
     fi
@@ -19,6 +21,16 @@ for i in $(seq 1 45); do
     sleep 2
 done
 
+# Verify root TCP auth works
+if ! mariadb -u root -p"${DB_ROOT_PASSWORD}" -h 127.0.0.1 -e "SELECT 1" &>/dev/null; then
+    echo "ERROR: Cannot authenticate as root@127.0.0.1 — check DB_ROOT_PASSWORD"
+    exit 1
+fi
+echo "    MariaDB root auth OK"
+
+# ---------------------------------------------------------------------------
+# 2. Wait for Redis
+# ---------------------------------------------------------------------------
 echo "==> Waiting for Redis..."
 for i in $(seq 1 15); do
     if redis-cli ping &>/dev/null; then
@@ -30,20 +42,7 @@ for i in $(seq 1 15); do
 done
 
 # ---------------------------------------------------------------------------
-# Set up MariaDB root password on first run
-# ---------------------------------------------------------------------------
-if [ ! -f "$DB_INIT_FLAG" ]; then
-    echo "==> Initializing MariaDB users..."
-    mariadb -u root --socket=/run/mysqld/mysqld.sock <<-EOSQL
-        FLUSH PRIVILEGES;
-        ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
-        FLUSH PRIVILEGES;
-EOSQL
-    touch "$DB_INIT_FLAG"
-fi
-
-# ---------------------------------------------------------------------------
-# Configure bench to use local MariaDB + Redis (every boot)
+# 3. Write common_site_config.json (every boot)
 # ---------------------------------------------------------------------------
 python3 -c "
 import json
@@ -64,14 +63,14 @@ print('common_site_config written')
 "
 
 # ---------------------------------------------------------------------------
-# Enforce MariaDB config in site_config.json (fix stale PG values)
+# 4. Enforce MariaDB config in existing site_config.json (fix stale PG values)
 # ---------------------------------------------------------------------------
 SITE_CONFIG="sites/${SITE_NAME}/site_config.json"
 
 if [ -f "$SITE_CONFIG" ]; then
     echo "==> Enforcing MariaDB config in site_config.json..."
     python3 -c "
-import json, sys
+import json
 
 path = '${SITE_CONFIG}'
 with open(path) as f:
@@ -80,12 +79,11 @@ with open(path) as f:
 old_type = cfg.get('db_type', 'unknown')
 old_host = cfg.get('db_host', 'unknown')
 
-# Overwrite DB connection fields to local MariaDB
-cfg['db_type']     = 'mariadb'
-cfg['db_host']     = '127.0.0.1'
-cfg['db_port']     = 3306
+cfg['db_type'] = 'mariadb'
+cfg['db_host'] = '127.0.0.1'
+cfg['db_port'] = 3306
 
-# Remove stale PostgreSQL-only keys if present
+# Remove stale PostgreSQL-only keys if migrating from PG
 for key in ['db_user', 'db_password', 'db_name']:
     if key in cfg and old_type == 'postgres':
         print(f'  Removing stale PG key: {key}={cfg[key]}')
@@ -102,7 +100,7 @@ else:
 fi
 
 # ---------------------------------------------------------------------------
-# Create site on first run
+# 5. Create site on first run
 # ---------------------------------------------------------------------------
 if [ ! -f "$SITE_CONFIG" ]; then
     echo "==> First run — creating site: ${SITE_NAME}"
@@ -120,7 +118,7 @@ if [ ! -f "$SITE_CONFIG" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Debug: print final configs before migrate
+# 6. Debug: print final configs
 # ---------------------------------------------------------------------------
 echo ""
 echo "========== common_site_config.json =========="
@@ -133,7 +131,7 @@ echo "=============================================="
 echo ""
 
 # ---------------------------------------------------------------------------
-# Build assets, migrate, serve
+# 7. Build assets, migrate, serve
 # ---------------------------------------------------------------------------
 echo "==> Building assets..."
 bench build

@@ -10,12 +10,12 @@ PORT="${PORT:-8000}"
 DB_INIT_FLAG="/data/.db_initialized"
 
 echo "==> Waiting for MariaDB..."
-for i in $(seq 1 30); do
-    if mariadb -u root -e "SELECT 1" &>/dev/null; then
+for i in $(seq 1 45); do
+    if mariadb -u root --socket=/run/mysqld/mysqld.sock -e "SELECT 1" &>/dev/null; then
         echo "    MariaDB ready"
         break
     fi
-    [ "$i" -eq 30 ] && echo "ERROR: MariaDB not ready" && exit 1
+    [ "$i" -eq 45 ] && echo "ERROR: MariaDB not ready after 90s" && exit 1
     sleep 2
 done
 
@@ -34,7 +34,7 @@ done
 # ---------------------------------------------------------------------------
 if [ ! -f "$DB_INIT_FLAG" ]; then
     echo "==> Initializing MariaDB users..."
-    mariadb -u root <<-EOSQL
+    mariadb -u root --socket=/run/mysqld/mysqld.sock <<-EOSQL
         FLUSH PRIVILEGES;
         ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
         FLUSH PRIVILEGES;

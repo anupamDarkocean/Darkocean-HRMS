@@ -73,21 +73,48 @@ RUN git config --global user.email "docker@deploy.local" \
 
 RUN pip install --user frappe-bench
 
-RUN bench init /home/frappe/frappe-bench \
-    --frappe-branch ${FRAPPE_BRANCH} \
-    --skip-redis-config-generation \
-    --skip-assets \
-    --verbose
+# ---------------------------------------------------------------------------
+# Manual bench init (split into steps for better Railway error visibility)
+# ---------------------------------------------------------------------------
+RUN mkdir -p /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/apps /home/frappe/frappe-bench/logs
 
 WORKDIR /home/frappe/frappe-bench
 
-RUN bench get-app erpnext --branch ${FRAPPE_BRANCH} --skip-assets
+# Step 1: Create virtualenv
+RUN python3 -m venv env
+
+# Step 2: Upgrade pip/setuptools in venv
+RUN ./env/bin/pip install --upgrade pip setuptools wheel
+
+# Step 3: Clone Frappe
+RUN git clone --depth 1 --branch ${FRAPPE_BRANCH} https://github.com/frappe/frappe.git apps/frappe
+
+# Step 4: Install Frappe Python deps
+RUN ./env/bin/pip install -e apps/frappe
+
+# Step 5: Install Frappe JS deps (yarn)
+RUN cd apps/frappe && yarn install --production
+
+# Step 6: Clone ERPNext
+RUN git clone --depth 1 --branch ${FRAPPE_BRANCH} https://github.com/frappe/erpnext.git apps/erpnext
+
+# Step 7: Install ERPNext Python deps
+RUN ./env/bin/pip install -e apps/erpnext
+
+# Step 8: Install ERPNext JS deps
+RUN cd apps/erpnext && yarn install --production
+
+# Step 9: Generate bench Procfile + config
+RUN echo '{}' > sites/common_site_config.json \
+    && echo -e "frappe\nerpnext" > sites/apps.txt
 
 # ---------------------------------------------------------------------------
 # Copy HRMS app
 # ---------------------------------------------------------------------------
 COPY --chown=frappe:frappe . apps/hrms/
-RUN ./env/bin/pip install --no-cache-dir -e apps/hrms/
+RUN ./env/bin/pip install --no-cache-dir -e apps/hrms/ \
+    && cd apps/hrms && [ -f package.json ] && yarn install --production || true \
+    && echo "hrms" >> /home/frappe/frappe-bench/sites/apps.txt
 
 # ---------------------------------------------------------------------------
 # Entrypoint

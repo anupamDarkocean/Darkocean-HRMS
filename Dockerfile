@@ -104,5 +104,4 @@ RUN chmod +x /usr/local/bin/init-volume.sh
 
 EXPOSE 8000
 
-VOLUME ["/data"]
 CMD ["/usr/local/bin/init-volume.sh"]

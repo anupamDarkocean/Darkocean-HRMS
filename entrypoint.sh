@@ -7,6 +7,7 @@ SITE_NAME="${FRAPPE_SITE_NAME:-site1.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-}"
 PORT="${PORT:-8000}"
+DB_INIT_FLAG="/data/.db_initialized"
 
 echo "==> Waiting for MariaDB..."
 for i in $(seq 1 30); do
@@ -29,16 +30,16 @@ for i in $(seq 1 15); do
 done
 
 # ---------------------------------------------------------------------------
-# Set up MariaDB root password + frappe user on first run
+# Set up MariaDB root password on first run
 # ---------------------------------------------------------------------------
-if [ ! -f "/home/frappe/.db_initialized" ]; then
+if [ ! -f "$DB_INIT_FLAG" ]; then
     echo "==> Initializing MariaDB users..."
     mariadb -u root <<-EOSQL
         FLUSH PRIVILEGES;
         ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
         FLUSH PRIVILEGES;
 EOSQL
-    touch /home/frappe/.db_initialized
+    touch "$DB_INIT_FLAG"
 fi
 
 # ---------------------------------------------------------------------------

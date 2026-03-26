@@ -35,15 +35,18 @@ RUN ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && npm install -g yarn
 
 # ---------------------------------------------------------------------------
-# MariaDB data dir setup
+# Persistent data dirs (Railway volume mounts to /data)
 # ---------------------------------------------------------------------------
-RUN mkdir -p /run/mysqld && chown mysql:mysql /run/mysqld \
-    && mysql_install_db --user=mysql --datadir=/var/lib/mysql
+RUN mkdir -p /data/mariadb /data/redis /data/sites /run/mysqld \
+    && chown mysql:mysql /data/mariadb /run/mysqld \
+    && chown -R redis:redis /data/redis
 
 # ---------------------------------------------------------------------------
-# Redis config (daemonize off for supervisord)
+# Redis config (daemonize off for supervisord, persist to /data)
 # ---------------------------------------------------------------------------
-RUN sed -i 's/^daemonize yes/daemonize no/' /etc/redis/redis.conf || true
+RUN sed -i 's/^daemonize yes/daemonize no/' /etc/redis/redis.conf || true \
+    && echo "dir /data/redis" >> /etc/redis/redis.conf \
+    && echo "appendonly yes" >> /etc/redis/redis.conf
 
 # ---------------------------------------------------------------------------
 # Non-root user for bench
@@ -92,8 +95,14 @@ RUN ./env/bin/pip install --no-cache-dir -e apps/hrms/
 COPY --chown=frappe:frappe entrypoint.sh /home/frappe/entrypoint.sh
 RUN chmod +x /home/frappe/entrypoint.sh
 
+# ---------------------------------------------------------------------------
+# Volume init script (runs as root, then starts supervisord)
+# ---------------------------------------------------------------------------
+USER root
+COPY init-volume.sh /usr/local/bin/init-volume.sh
+RUN chmod +x /usr/local/bin/init-volume.sh
+
 EXPOSE 8000
 
-# supervisord must run as root to manage MariaDB + Redis
-USER root
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+VOLUME ["/data"]
+CMD ["/usr/local/bin/init-volume.sh"]

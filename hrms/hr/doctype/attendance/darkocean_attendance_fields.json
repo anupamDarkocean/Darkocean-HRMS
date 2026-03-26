@@ -1,6 +1,0 @@
-[
-  {"doctype": "Custom Field", "dt": "Attendance", "fieldname": "custom_project_site", "label": "Project Site", "fieldtype": "Data", "insert_after": "shift"},
-  {"doctype": "Custom Field", "dt": "Attendance", "fieldname": "custom_geolocation_checkin", "label": "Check-in Location (GPS)", "fieldtype": "Data", "insert_after": "custom_project_site"},
-  {"doctype": "Custom Field", "dt": "Attendance", "fieldname": "custom_geolocation_checkout", "label": "Check-out Location (GPS)", "fieldtype": "Data", "insert_after": "custom_geolocation_checkin"},
-  {"doctype": "Custom Field", "dt": "Attendance", "fieldname": "custom_is_offshore", "label": "Offshore Attendance", "fieldtype": "Check", "insert_after": "custom_geolocation_checkout"}
-]

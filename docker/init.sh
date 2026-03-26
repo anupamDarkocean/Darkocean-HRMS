@@ -39,9 +39,4 @@ bench --site hrms.localhost enable-scheduler
 bench --site hrms.localhost clear-cache
 bench use hrms.localhost
 
-# Darkocean HRMS — Post-install customisation
-echo "Running Darkocean HRMS customisation patches..."
-bench --site "${SITE_NAME:-hrms.localhost}" execute hrms.patches.darkocean.after_install.execute || echo "Warning: Darkocean setup patch failed — run manually"
-echo "Darkocean HRMS setup complete."
-
 bench start

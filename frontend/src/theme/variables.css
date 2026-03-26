@@ -1,14 +1,6 @@
 /* Ionic Variables and Theming. For more info, please see:
 http://ionicframework.com/docs/theming/ */
 
-/* Darkocean HRMS Brand Colours */
-:root {
-	--darkocean-navy: #0A1628;
-	--darkocean-cyan: #00C6FF;
-	--darkocean-secondary: #1A3A5C;
-	--darkocean-text-light: #E8F4FD;
-}
-
 /** Ionic CSS Variables **/
 
 :root {

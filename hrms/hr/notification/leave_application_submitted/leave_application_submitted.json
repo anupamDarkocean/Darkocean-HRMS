@@ -1,9 +1,0 @@
-{
-  "doctype": "Notification",
-  "name": "Leave Application Submitted",
-  "subject": "Leave Application by {{ doc.employee_name }} \u2014 {{ doc.leave_type }}",
-  "document_type": "Leave Application",
-  "event": "New",
-  "channel": "Email",
-  "message": "Dear Manager,<br><br>{{ doc.employee_name }} has submitted a leave application.<br><br>Leave Type: {{ doc.leave_type }}<br>From: {{ doc.from_date }}<br>To: {{ doc.to_date }}<br>Total Days: {{ doc.total_leave_days }}<br>Reason: {{ doc.description }}<br><br>Please review in Darkocean HRMS.<br><br>Regards,<br>Darkocean HR System"
-}

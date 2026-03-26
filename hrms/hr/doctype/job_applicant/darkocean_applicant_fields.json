@@ -1,5 +1,0 @@
-[
-  {"doctype": "Custom Field", "dt": "Job Applicant", "fieldname": "custom_nationality", "label": "Nationality", "fieldtype": "Data", "insert_after": "email_id"},
-  {"doctype": "Custom Field", "dt": "Job Applicant", "fieldname": "custom_has_required_clearance", "label": "Has Required Clearance", "fieldtype": "Check", "insert_after": "designation"},
-  {"doctype": "Custom Field", "dt": "Job Applicant", "fieldname": "custom_clearance_document", "label": "Clearance Document", "fieldtype": "Attach", "insert_after": "custom_has_required_clearance", "depends_on": "eval:doc.custom_has_required_clearance == 1"}
-]

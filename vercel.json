@@ -1,7 +1,0 @@
-{
-  "buildCommand": "cd frontend && yarn install && yarn build",
-  "outputDirectory": "hrms/public/frontend",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}

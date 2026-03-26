@@ -1,21 +1,19 @@
 app_name = "hrms"
-app_title = "Darkocean HRMS"
-app_publisher = "Darkocean AI & Marine Technology"
-app_description = "Human Resource Management System for Darkocean AI & Marine Technology"
-app_email = "hr@darkocean.ai"
+app_title = "Frappe HR"
+app_publisher = "Frappe Technologies Pvt. Ltd."
+app_description = "Modern HR and Payroll Software"
+app_email = "contact@frappe.io"
 app_license = "GNU General Public License (v3)"
-app_icon = "octicon octicon-anchor"
-app_color = "#0A1628"
 required_apps = ["frappe/erpnext"]
-source_link = "https://github.com/darkocean-ai/Darkocean-HRMS"
-app_logo_url = "/assets/hrms/images/darkocean-logo.png"
+source_link = "http://github.com/frappe/hrms"
+app_logo_url = "/assets/hrms/images/frappe-hr-logo.svg"
 app_home = "/desk/people"
 
 add_to_apps_screen = [
 	{
 		"name": "hrms",
-		"logo": "/assets/hrms/images/darkocean-logo.png",
-		"title": "Darkocean HRMS",
+		"logo": "/assets/hrms/images/frappe-hr-logo.svg",
+		"title": "Frappe HR",
 		"route": "/desk/people",
 		"has_permission": "hrms.hr.utils.check_app_permission",
 	}
@@ -157,11 +155,6 @@ override_doctype_class = {
 	"Project": "hrms.overrides.employee_project.EmployeeProject",
 }
 
-# Darkocean mixins — extend core classes with Qatar-specific logic
-extend_doctype_class = {
-	"Employee": "hrms.overrides.darkocean_employee.DarkoceanEmployee",
-}
-
 # Document Events
 # ---------------
 # Hook on document methods and events
@@ -250,16 +243,8 @@ scheduler_events = {
 		"hrms.hr.doctype.leave_ledger_entry.leave_ledger_entry.process_expired_allocation",
 		"hrms.hr.utils.generate_leave_encashment",
 		"hrms.hr.utils.allocate_earned_leaves",
-		# Darkocean: 25th of month payroll reminder + 1st of month leave balance summary
-		"hrms.tasks.darkocean_tasks.monthly_payroll_reminder",
-		"hrms.tasks.darkocean_tasks.monthly_leave_balance_summary",
 	],
-	"weekly": [
-		"hrms.controllers.employee_reminders.send_reminders_in_advance_weekly",
-		# Darkocean: passport & visa expiry alerts
-		"hrms.tasks.darkocean_tasks.check_passport_expiry",
-		"hrms.tasks.darkocean_tasks.check_visa_expiry",
-	],
+	"weekly": ["hrms.controllers.employee_reminders.send_reminders_in_advance_weekly"],
 	"monthly": ["hrms.controllers.employee_reminders.send_reminders_in_advance_monthly"],
 }
 

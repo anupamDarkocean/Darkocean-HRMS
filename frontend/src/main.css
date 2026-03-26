@@ -1,5 +1,4 @@
 @import "frappe-ui/src/style.css";
-@import "./theme/darkocean.css";
 
 ion-modal {
 	--height: auto;

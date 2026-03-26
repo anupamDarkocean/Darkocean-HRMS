@@ -1,3 +1,0 @@
-[
-  {"doctype": "Custom Field", "dt": "Goal", "fieldname": "custom_project_contribution", "label": "Project Contribution", "fieldtype": "Link", "options": "Project", "insert_after": "title", "description": "Link to project this goal contributes to"}
-]

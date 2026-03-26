@@ -1,4 +1,0 @@
-[
-  {"doctype": "Custom Field", "dt": "Shift Schedule", "fieldname": "custom_vessel_assignment", "label": "Vessel Assignment", "fieldtype": "Link", "options": "Vessel", "insert_after": "company"},
-  {"doctype": "Custom Field", "dt": "Shift Schedule", "fieldname": "custom_project_assignment", "label": "Project Assignment", "fieldtype": "Link", "options": "Project", "insert_after": "custom_vessel_assignment"}
-]

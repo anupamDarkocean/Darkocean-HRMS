@@ -1,5 +1,0 @@
-[
-  {"doctype": "Custom Field", "dt": "Expense Claim", "fieldname": "custom_project_code", "label": "Project Code", "fieldtype": "Link", "options": "Project", "insert_after": "employee"},
-  {"doctype": "Custom Field", "dt": "Expense Claim", "fieldname": "custom_vessel_name", "label": "Vessel Name", "fieldtype": "Link", "options": "Vessel", "insert_after": "custom_project_code"},
-  {"doctype": "Custom Field", "dt": "Expense Claim", "fieldname": "custom_currency_note", "label": "Currency Note", "fieldtype": "Small Text", "insert_after": "total_claimed_amount", "description": "Multi-currency supported: QAR, USD, GBP. Amounts converted to QAR for processing."}
-]

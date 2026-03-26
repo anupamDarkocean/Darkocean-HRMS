@@ -6,19 +6,40 @@ ARG FRAPPE_BRANCH=develop
 
 # ---------------------------------------------------------------------------
 # System dependencies
+# bench init compiles C extensions (psycopg2, Pillow, cryptography, etc.)
+# that need headers + pkg-config to locate them.
 # ---------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    # --- build toolchain ---
     build-essential \
+    pkg-config \
+    python3-dev \
+    # --- core tools ---
     git \
     curl \
+    cron \
+    # --- crypto / SSL ---
     libssl-dev \
-    libjpeg-dev \
-    zlib1g-dev \
     libffi-dev \
+    # --- PostgreSQL (psycopg2) ---
     libpq-dev \
     postgresql-client \
+    # --- Pillow image deps ---
+    libjpeg-dev \
+    zlib1g-dev \
+    libfreetype6-dev \
+    libwebp-dev \
+    libtiff-dev \
+    libopenjp2-7-dev \
+    liblcms2-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    # --- Redis CLI (healthchecks) ---
     redis-tools \
-    cron \
+    # --- PDF generation (wkhtmltopdf) ---
+    wkhtmltopdf \
+    xfonts-75dpi \
+    xfonts-base \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------

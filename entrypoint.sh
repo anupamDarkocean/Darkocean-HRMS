@@ -9,6 +9,26 @@ DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-}"
 PORT="${PORT:-8000}"
 
 # ---------------------------------------------------------------------------
+# 0. Start a temporary health-check server so Railway doesn't kill us
+#    while bench build / migrate are still running
+# ---------------------------------------------------------------------------
+echo "==> Starting temporary health-check server on port ${PORT}..."
+python3 -c "
+import http.server, threading
+class H(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b'Starting up...')
+    def log_message(self, *a): pass
+s = http.server.HTTPServer(('0.0.0.0', ${PORT}), H)
+threading.Thread(target=s.serve_forever, daemon=True).start()
+import time; time.sleep(999999)
+" &
+HEALTH_PID=$!
+echo "    Health-check PID: ${HEALTH_PID}"
+
+# ---------------------------------------------------------------------------
 # 1. Wait for MariaDB (auth-free check)
 # ---------------------------------------------------------------------------
 echo "==> Waiting for MariaDB..."
@@ -153,6 +173,11 @@ echo "==> Running migrations..."
 bench --site "${SITE_NAME}" migrate
 
 bench --site "${SITE_NAME}" enable-scheduler
+
+# Kill the temporary health-check server
+echo "==> Stopping health-check server (PID ${HEALTH_PID})..."
+kill "${HEALTH_PID}" 2>/dev/null || true
+sleep 1
 
 echo "==> Serving on port ${PORT}"
 exec bench serve --port "${PORT}" --host 0.0.0.0

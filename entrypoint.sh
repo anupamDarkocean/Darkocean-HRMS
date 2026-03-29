@@ -3,6 +3,10 @@ set -e
 
 cd /home/frappe/frappe-bench
 
+# Activate the bench virtualenv so 'bench' and frappe modules are available
+source /home/frappe/frappe-bench/env/bin/activate
+export PATH="/home/frappe/.local/bin:$PATH"
+
 SITE_NAME="${FRAPPE_SITE_NAME:-site1.local}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-}"

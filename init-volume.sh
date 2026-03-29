@@ -41,6 +41,16 @@ ln -sf /data/sites "${BENCH_SITES}"
 chown -h frappe:frappe "${BENCH_SITES}"
 
 # ---------------------------------------------------------------------------
+# 3b. Logs dir on volume — Frappe resolves ../logs from /data/sites → /data/logs
+# ---------------------------------------------------------------------------
+mkdir -p /data/logs
+chown frappe:frappe /data/logs
+BENCH_LOGS="/home/frappe/frappe-bench/logs"
+rm -rf "${BENCH_LOGS}"
+ln -sf /data/logs "${BENCH_LOGS}"
+chown -h frappe:frappe "${BENCH_LOGS}"
+
+# ---------------------------------------------------------------------------
 # 4. Bootstrap MariaDB root password (first run only)
 #    We start MariaDB temporarily, set root password for TCP access,
 #    then stop it. Supervisord will start it properly afterward.

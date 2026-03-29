@@ -83,8 +83,8 @@ WORKDIR /home/frappe/frappe-bench
 # Step 1: Create virtualenv
 RUN python3 -m venv env
 
-# Step 2: Upgrade pip/setuptools in venv
-RUN ./env/bin/pip install --upgrade pip setuptools wheel
+# Step 2: Upgrade pip/setuptools in venv and install bench
+RUN ./env/bin/pip install --upgrade pip setuptools wheel frappe-bench
 
 # Step 3: Clone Frappe
 RUN git clone --depth 1 --branch ${FRAPPE_BRANCH} https://github.com/frappe/frappe.git apps/frappe

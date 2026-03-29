@@ -66,6 +66,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Install bench + frappe + erpnext as frappe user
 # ---------------------------------------------------------------------------
 USER frappe
+ENV HOME=/home/frappe
 WORKDIR /home/frappe
 
 RUN git config --global user.email "docker@deploy.local" \
@@ -79,7 +80,9 @@ RUN pip install --user frappe-bench
 RUN mkdir -p /home/frappe/frappe-bench/sites \
              /home/frappe/frappe-bench/apps \
              /home/frappe/frappe-bench/logs \
-             /home/frappe/frappe-bench/config/pids
+             /home/frappe/frappe-bench/config/pids \
+             /home/frappe/.config/yarn \
+             /home/frappe/.cache/yarn
 
 WORKDIR /home/frappe/frappe-bench
 
@@ -94,6 +97,23 @@ RUN git clone --depth 1 --branch ${FRAPPE_BRANCH} https://github.com/frappe/frap
 
 # Step 4: Install Frappe Python deps
 RUN ./env/bin/pip install -e apps/frappe
+
+# Step 4b: Patch frappe/build.py — fix broken shell quoting in get_assets_link()
+#   upstream bug: getoutput() sed pipeline breaks on dash, and the error message
+#   contains an apostrophe that corrupts log output
+RUN python3 <<'PYEOF'
+import re, pathlib
+p = pathlib.Path("apps/frappe/frappe/build.py")
+src = p.read_text()
+# Neutralize the getoutput() call that breaks on dash/sh
+src = re.sub(r'tag\s*=\s*getoutput\([\s\S]*?\n\s*\)', 'tag = ""', src, count=1)
+# Fix apostrophe in error message
+src = src.replace("don't exist", "do not exist")
+# Add timeout to requests.head() to prevent hangs
+src = src.replace("requests.head(url)", "requests.head(url, timeout=5)")
+p.write_text(src)
+print("Patched frappe/build.py: neutralized getoutput(), fixed quoting")
+PYEOF
 
 # Step 5: Install Frappe JS deps (yarn)
 RUN cd apps/frappe && yarn install --production
@@ -141,6 +161,7 @@ RUN chmod +x /home/frappe/entrypoint.sh
 # Volume init script (runs as root, then starts supervisord)
 # ---------------------------------------------------------------------------
 USER root
+ENV HOME=/root
 COPY init-volume.sh /usr/local/bin/init-volume.sh
 RUN chmod +x /usr/local/bin/init-volume.sh
 

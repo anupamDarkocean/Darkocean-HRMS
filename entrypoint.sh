@@ -3,6 +3,15 @@ set -e
 
 cd /home/frappe/frappe-bench
 
+# ---------------------------------------------------------------------------
+# Ensure correct HOME so Yarn/npm config resolves to /home/frappe, not /root.
+# supervisord user= changes UID but does NOT update environment variables,
+# so HOME is inherited as /root from the root init process.
+# ---------------------------------------------------------------------------
+export HOME=/home/frappe
+export XDG_CONFIG_HOME=/home/frappe/.config
+mkdir -p "$XDG_CONFIG_HOME/yarn" "$HOME/.cache/yarn"
+
 # Activate the bench virtualenv so 'bench' and frappe modules are available
 # IMPORTANT: venv bin must come BEFORE .local/bin so the venv's bench is used
 source /home/frappe/frappe-bench/env/bin/activate
@@ -93,12 +102,29 @@ with open('sites/common_site_config.json', 'w') as f:
 print('common_site_config written')
 "
 
-# Fix broken apps.txt (previous builds wrote '-e frappe' due to echo -e in dash)
-if grep -q '^-e ' sites/apps.txt 2>/dev/null; then
-    echo "==> Fixing broken apps.txt..."
-    sed -i 's/^-e //' sites/apps.txt
-    cat sites/apps.txt
-fi
+# Sanitize apps.txt: strip -e prefixes, editable-install paths, blanks, dupes
+# Runs every boot to catch volume-persisted broken files from prior deploys
+echo "==> Sanitizing apps.txt..."
+python3 -c "
+import re, pathlib
+p = pathlib.Path('sites/apps.txt')
+if not p.exists():
+    p.write_text('frappe\nerpnext\nhrms\n')
+    print('  apps.txt: created default [frappe, erpnext, hrms]')
+else:
+    raw = p.read_text().splitlines()
+    clean = []
+    for line in raw:
+        name = line.strip()
+        name = re.sub(r'^-e\s+', '', name)        # strip -e prefix
+        name = name.rstrip('/').rsplit('/', 1)[-1] # path -> basename
+        name = re.sub(r'[=<>!\[@].*', '', name)   # strip version/extras
+        name = name.strip()
+        if name and name not in clean:
+            clean.append(name)
+    p.write_text('\n'.join(clean) + '\n')
+    print('  apps.txt:', clean)
+"
 
 # ---------------------------------------------------------------------------
 # 4. Enforce MariaDB config in existing site_config.json (fix stale PG values)

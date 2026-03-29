@@ -41,10 +41,17 @@ for i in $(seq 1 45); do
     sleep 2
 done
 
-# Verify root TCP auth works
+# Ensure root can connect via TCP — reset password if needed
 if ! mariadb -u root -p"${DB_ROOT_PASSWORD}" -h 127.0.0.1 -e "SELECT 1" &>/dev/null; then
-    echo "ERROR: Cannot authenticate as root@127.0.0.1 — check DB_ROOT_PASSWORD"
-    exit 1
+    echo "    TCP auth failed, resetting root password via socket..."
+    mariadb --socket=/run/mysqld/mysqld.sock -u root <<-EOSQL
+        ALTER USER 'root'@'localhost' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
+        CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
+        ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '${DB_ROOT_PASSWORD}';
+        GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
+        FLUSH PRIVILEGES;
+EOSQL
+    echo "    Root password reset OK"
 fi
 echo "    MariaDB root auth OK"
 

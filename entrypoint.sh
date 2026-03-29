@@ -93,6 +93,13 @@ with open('sites/common_site_config.json', 'w') as f:
 print('common_site_config written')
 "
 
+# Fix broken apps.txt (previous builds wrote '-e frappe' due to echo -e in dash)
+if grep -q '^-e ' sites/apps.txt 2>/dev/null; then
+    echo "==> Fixing broken apps.txt..."
+    sed -i 's/^-e //' sites/apps.txt
+    cat sites/apps.txt
+fi
+
 # ---------------------------------------------------------------------------
 # 4. Enforce MariaDB config in existing site_config.json (fix stale PG values)
 # ---------------------------------------------------------------------------

@@ -109,7 +109,7 @@ RUN cd apps/erpnext && yarn install --production
 
 # Step 9: Generate bench config files
 RUN echo '{}' > sites/common_site_config.json \
-    && echo -e "frappe\nerpnext" > sites/apps.txt
+    && printf "frappe\nerpnext\n" > sites/apps.txt
 
 # Step 10: Generate Procfile (required by bench CLI)
 RUN cat > Procfile <<'EOF'

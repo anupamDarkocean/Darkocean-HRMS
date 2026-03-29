@@ -76,7 +76,10 @@ RUN pip install --user frappe-bench
 # ---------------------------------------------------------------------------
 # Manual bench init (split into steps for better Railway error visibility)
 # ---------------------------------------------------------------------------
-RUN mkdir -p /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/apps /home/frappe/frappe-bench/logs
+RUN mkdir -p /home/frappe/frappe-bench/sites \
+             /home/frappe/frappe-bench/apps \
+             /home/frappe/frappe-bench/logs \
+             /home/frappe/frappe-bench/config/pids
 
 WORKDIR /home/frappe/frappe-bench
 
@@ -104,9 +107,21 @@ RUN ./env/bin/pip install -e apps/erpnext
 # Step 8: Install ERPNext JS deps
 RUN cd apps/erpnext && yarn install --production
 
-# Step 9: Generate bench Procfile + config
+# Step 9: Generate bench config files
 RUN echo '{}' > sites/common_site_config.json \
     && echo -e "frappe\nerpnext" > sites/apps.txt
+
+# Step 10: Generate Procfile (required by bench CLI)
+RUN cat > Procfile <<'EOF'
+redis_cache: redis-server /etc/redis/redis.conf
+redis_queue: redis-server /etc/redis/redis.conf
+redis_socketio: redis-server /etc/redis/redis.conf
+web: bench serve --port 8000
+socketio: node apps/frappe/socketio.js
+worker_short: bench worker --queue short
+worker_long: bench worker --queue long,default
+scheduler: bench scheduler
+EOF
 
 # ---------------------------------------------------------------------------
 # Copy HRMS app

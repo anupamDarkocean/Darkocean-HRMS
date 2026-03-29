@@ -131,7 +131,20 @@ echo "=============================================="
 echo ""
 
 # ---------------------------------------------------------------------------
-# 7. Build assets, migrate, serve
+# 7. Ensure Frappe can route requests from any Host header
+# ---------------------------------------------------------------------------
+# Railway (and other PaaS) send requests with the public domain as Host.
+# Tell Frappe which site to serve regardless of the incoming Host header.
+bench use "${SITE_NAME}" 2>/dev/null || true
+
+# If RAILWAY_PUBLIC_DOMAIN is set, add it as a domain alias for the site
+if [ -n "${RAILWAY_PUBLIC_DOMAIN:-}" ]; then
+    echo "==> Adding Railway domain alias: ${RAILWAY_PUBLIC_DOMAIN}"
+    bench --site "${SITE_NAME}" add-domain "${RAILWAY_PUBLIC_DOMAIN}" 2>/dev/null || true
+fi
+
+# ---------------------------------------------------------------------------
+# 8. Build assets, migrate, serve
 # ---------------------------------------------------------------------------
 echo "==> Building assets..."
 bench build
